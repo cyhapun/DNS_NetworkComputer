@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <div class="header">
+      <h5 class="">Coppyright by CHP</h5>
+    </div>
+    <title>Quiz DNS</title>
+
+    <style>
+      .header h5 {
+        font-style: italic;
+        text-align: center;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f4f4f9;
+        color: #333;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .question-box {
+        margin-bottom: 30px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #f9f9f9;
+      }
+
+      .question {
+        margin-bottom: 15px;
+        font-size: 18px;
+      }
+
+      .answers {
+        list-style: none;
+        padding: 0;
+      }
+
+      .answers li {
+        margin: 5px 0;
+      }
+
+      .btn {
+        margin-top: 15px;
+        padding: 10px 15px;
+        font-size: 14px;
+        color: #fff;
+        background: #007bff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .btn:hover {
+        background: #0056b3;
+      }
+
+      .result {
+        text-align: center;
+        font-size: 20px;
+        margin-top: 20px;
+        color: #28a745;
+      }
+
+      .result.error {
+        color: #dc3545;
+      }
+
+      .explanation {
+        margin-top: 10px;
+        font-size: 16px;
+        color: #28a745;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>DNS Quiz</h1>
+      <div id="quiz"></div>
+      <button class="btn" onclick="checkAnswers()">Submit</button>
+      <div id="result" class="result"></div>
+    </div>
+
+    <script>
+      const quizData = [
+        {
+          question: "DNS hoạt động trên tầng nào trong mô hình OSI?",
+          options: ["Tầng 1", "Tầng 3", "Tầng 4", "Tầng 7"],
+          answer: "Tầng 7",
+          explanation:
+            "DNS (Domain Name System) hoạt động ở tầng ứng dụng (tầng 7) trong mô hình OSI. Nó cung cấp dịch vụ phân giải tên miền thành địa chỉ IP cho các ứng dụng.",
+        },
+        {
+          question: "Tại sao sử dụng CNAME record trong DNS?",
+          options: [
+            "Để chỉ định địa chỉ IP cho một tên miền",
+            "Để tạo alias cho một tên miền khác",
+            "Để lưu trữ thông tin về mail server",
+            "Để xác định tên miền gốc",
+          ],
+          answer: "Để tạo alias cho một tên miền khác",
+          explanation:
+            "CNAME (Canonical Name) record cho phép bạn tạo một tên miền phụ (alias) trỏ đến một tên miền chính. Điều này giúp quản lý tên miền dễ dàng hơn và cho phép nhiều tên miền trỏ đến cùng một địa chỉ IP.",
+        },
+        {
+          question: "Thông tin nào được lưu trữ trong SOA record?",
+          options: [
+            "Địa chỉ IP của tên miền",
+            "Thông tin về mail server",
+            "Thông tin quản lý zone DNS",
+            "Tên miền gốc",
+          ],
+          answer: "Thông tin quản lý zone DNS",
+          explanation:
+            "SOA (Start of Authority) record chứa thông tin quan trọng về zone DNS, bao gồm tên miền quản lý, địa chỉ email của người quản lý, số phiên bản của zone, và các thông số liên quan đến việc cập nhật và phân giải.",
+        },
+        {
+          question: "Khi nào DNS server sẽ thực hiện việc 'zone transfer'?",
+          options: [
+            "Khi có yêu cầu từ client",
+            "Khi cập nhật thông tin DNS",
+            "Khi có thông tin mới từ Root DNS server",
+            "Khi có lỗi trong phân giải tên miền",
+          ],
+          answer: "Khi cập nhật thông tin DNS",
+          explanation:
+            "Zone transfer là quá trình sao chép thông tin từ một DNS server (thường là master) sang một DNS server khác (thường là slave) để đảm bảo rằng cả hai server đều có thông tin giống nhau. Điều này thường xảy ra khi có cập nhật thông tin trong zone DNS.",
+        },
+        {
+          question:
+            "Để cải thiện độ tin cậy của hệ thống DNS, quản trị viên nên làm gì?",
+          options: [
+            "Giảm số lượng DNS server",
+            "Sử dụng chỉ một DNS server",
+            "Thiết lập nhiều DNS server với cấu hình sao lưu",
+            "Tắt caching trên tất cả các server",
+          ],
+          answer: "Thiết lập nhiều DNS server với cấu hình sao lưu",
+          explanation:
+            "Việc thiết lập nhiều DNS server với cấu hình sao lưu giúp tăng cường độ tin cậy và khả năng chịu lỗi của hệ thống DNS. Nếu một server gặp sự cố, các server khác vẫn có thể phục vụ yêu cầu của client.",
+        },
+        {
+          question: "Tại sao DNS sử dụng cả UDP và TCP?",
+          options: [
+            "Để tăng tốc độ truy vấn",
+            "UDP cho truy vấn và TCP cho cập nhật",
+            "UDP cho tất cả các loại truy vấn",
+            "TCP không cần thiết trong DNS",
+          ],
+          answer: "UDP cho truy vấn và TCP cho cập nhật",
+          explanation:
+            "DNS chủ yếu sử dụng UDP (User Datagram Protocol) cho các truy vấn nhanh chóng vì nó nhẹ và không cần thiết lập kết nối. TCP (Transmission Control Protocol) được sử dụng cho các tác vụ cần độ tin cậy cao hơn, chẳng hạn như cập nhật thông tin (zone transfer) hoặc khi kích thước phản hồi vượt quá giới hạn của UDP.",
+        },
+        {
+          question: "Một DNS server 'authoritative' là gì?",
+          options: [
+            "Server chỉ cung cấp thông tin từ cache",
+            "Server có quyền quản lý và cung cấp thông tin chính xác về một zone",
+            "Server không có thông tin về zone",
+            "Server chỉ có thể trả lời truy vấn từ client nội bộ",
+          ],
+          answer:
+            "Server có quyền quản lý và cung cấp thông tin chính xác về một zone",
+          explanation:
+            "DNS server 'authoritative' là server có quyền quản lý một zone cụ thể và có khả năng cung cấp thông tin chính xác về các tên miền trong zone đó. Nó có thể trả lời các truy vấn với dữ liệu chính xác mà không cần phải tham khảo server khác.",
+        },
+        {
+          question: "Thời gian sống (TTL) trong DNS record có ý nghĩa gì?",
+          options: [
+            "Thời gian mà một DNS server có thể lưu trữ thông tin",
+            "Thời gian mà một client có thể sử dụng thông tin",
+            "Thời gian để hoàn thành một truy vấn",
+            "Thời gian mà một tên miền tồn tại",
+          ],
+          answer: "Thời gian mà một DNS server có thể lưu trữ thông tin",
+          explanation:
+            "TTL (Time to Live) là một giá trị trong DNS record cho biết thời gian (tính bằng giây) mà một DNS server có thể lưu trữ thông tin trong cache trước khi phải làm mới hoặc xóa bỏ thông tin đó. TTL giúp quản lý lưu lượng truy vấn và độ chính xác của dữ liệu.",
+        },
+        {
+          question:
+            "Để phân giải địa chỉ IP thành tên miền, loại record nào được sử dụng?",
+          options: ["A record", "CNAME record", "PTR record", "MX record"],
+          answer: "PTR record",
+          explanation:
+            "PTR (Pointer) record được sử dụng để phân giải địa chỉ IP thành tên miền. Điều này thường được thực hiện trong các truy vấn ngược (reverse lookup), cho phép xác định tên miền tương ứng với một địa chỉ IP cụ thể.",
+        },
+        {
+          question:
+            "DNS server nào được sử dụng để quản lý các tên miền cấp cao nhất (TLD)?",
+          options: [
+            "Authoritative DNS server",
+            "Root DNS server",
+            "Local DNS server",
+            "Forwarder DNS server",
+          ],
+          answer: "Root DNS server",
+          explanation:
+            "Root DNS server là các server quản lý các tên miền cấp cao nhất trong hệ thống DNS, chẳng hạn như .com, .org, .net, và các tên miền quốc gia như .vn. Chúng cung cấp thông tin về các DNS server cho các tên miền cấp dưới.",
+        },
+        {
+          question:
+            "Điều gì xảy ra khi một DNS server không thể phân giải tên miền?",
+          options: [
+            "Nó sẽ trả về địa chỉ IP mặc định",
+            "Nó sẽ thông báo lỗi cho client",
+            "Nó sẽ lưu trữ tên miền trong cache",
+            "Nó sẽ tự động cập nhật thông tin",
+          ],
+          answer: "Nó sẽ thông báo lỗi cho client",
+          explanation:
+            "Nếu một DNS server không thể phân giải tên miền, nó sẽ trả về một thông báo lỗi cho client, chẳng hạn như 'NXDOMAIN' (Non-Existent Domain), cho biết rằng tên miền không tồn tại hoặc không thể truy cập.",
+        },
+        {
+          question:
+            "Trong trường hợp nào bạn nên sử dụng Conditional Forwarder?",
+          options: [
+            "Khi bạn muốn DNS server xử lý tất cả các truy vấn",
+            "Khi bạn muốn chuyển tiếp truy vấn đến một DNS server cụ thể cho một tên miền nhất định",
+            "Khi bạn không có DNS server",
+            "Khi bạn muốn tắt hoàn toàn DNS",
+          ],
+          answer:
+            "Khi bạn muốn chuyển tiếp truy vấn đến một DNS server cụ thể cho một tên miền nhất định",
+          explanation:
+            "Conditional Forwarder cho phép bạn chỉ định một DNS server khác để xử lý các truy vấn cho một tên miền cụ thể. Điều này hữu ích khi bạn có các tên miền nội bộ hoặc tên miền bên ngoài mà bạn muốn chuyển tiếp đến một DNS server nhất định thay vì phải tìm kiếm qua nhiều DNS server khác.",
+        },
+        {
+          question:
+            "Để bảo vệ thông tin DNS khỏi việc bị giả mạo, công nghệ nào thường được sử dụng?",
+          options: [
+            "DNSSEC (DNS Security Extensions)",
+            "SSL (Secure Sockets Layer)",
+            "VPN (Virtual Private Network)",
+            "Firewall",
+          ],
+          answer: "DNSSEC (DNS Security Extensions)",
+          explanation:
+            "DNSSEC là một bộ mở rộng bảo mật cho DNS, cho phép xác thực tính toàn vẹn của dữ liệu DNS và ngăn chặn các cuộc tấn công giả mạo. Nó sử dụng chữ ký số để xác nhận rằng các phản hồi DNS là hợp lệ và chưa bị thay đổi.",
+        },
+        {
+          question: "Tại sao cần phải có nhiều DNS server trong một hệ thống?",
+          options: [
+            "Để giảm chi phí",
+            "Để tăng cường khả năng chịu lỗi và độ tin cậy",
+            "Để tăng tốc độ kết nối Internet",
+            "Để quản lý tên miền dễ dàng hơn",
+          ],
+          answer: "Để tăng cường khả năng chịu lỗi và độ tin cậy",
+          explanation:
+            "Việc có nhiều DNS server giúp tăng cường khả năng chịu lỗi, vì nếu một server gặp sự cố, các server khác vẫn có thể phục vụ yêu cầu của client. Điều này cũng giúp giảm tải cho mỗi server và cải thiện độ tin cậy của dịch vụ DNS.",
+        },
+        {
+          question: "Tại sao các tổ chức nên sử dụng DNS caching?",
+          options: [
+            "Để giảm băng thông và tăng tốc độ truy vấn",
+            "Để tăng độ chính xác của thông tin",
+            "Để bảo vệ thông tin DNS",
+            "Để lưu trữ tất cả thông tin DNS vĩnh viễn",
+          ],
+          answer: "Để giảm băng thông và tăng tốc độ truy vấn",
+          explanation:
+            "DNS caching cho phép các DNS server lưu trữ tạm thời các kết quả truy vấn trước đó, giúp giảm băng thông mạng và tăng tốc độ truy vấn cho các yêu cầu lặp lại. Điều này làm giảm thời gian cần thiết để phân giải tên miền.",
+        },
+        {
+          question:
+            "Loại DNS record nào được sử dụng để chỉ định mail server cho một tên miền?",
+          options: ["A record", "CNAME record", "MX record", "TXT record"],
+          answer: "MX record",
+          explanation:
+            "MX (Mail Exchange) record được sử dụng để chỉ định các mail server cho một tên miền, cho phép các email được gửi đến đúng địa chỉ. Nó xác định máy chủ nào sẽ nhận email cho tên miền đó.",
+        },
+        {
+          question:
+            "Khi một DNS server nhận được yêu cầu từ client, nhưng không có thông tin trong cache, nó sẽ bắt đầu từ đâu để tìm kiếm?",
+          options: [
+            "Local DNS server",
+            "Authoritative DNS server",
+            "Root DNS server",
+            "TLD DNS server",
+          ],
+          answer: "Root DNS server",
+          explanation:
+            "Khi một DNS server không có thông tin trong cache, nó sẽ bắt đầu từ Root DNS server để tìm kiếm thông tin về tên miền yêu cầu. Root DNS server sẽ hướng dẫn nó đến các TLD DNS server và cuối cùng đến Authoritative DNS server để lấy thông tin chính xác.",
+        },
+        {
+          question: "DNS delegation là gì?",
+          options: [
+            "Quá trình chuyển tiếp truy vấn đến một DNS server khác",
+            "Quá trình ủy thác quyền quản lý một subdomain cho một DNS server khác",
+            "Quá trình lưu trữ thông tin DNS trong cache",
+            "Quá trình cập nhật thông tin DNS",
+          ],
+          answer:
+            "Quá trình ủy thác quyền quản lý một subdomain cho một DNS server khác",
+          explanation:
+            "DNS delegation là quá trình mà một DNS server ủy thác quyền quản lý cho một subdomain cho một DNS server khác. Điều này cho phép tổ chức quản lý các subdomain của họ một cách độc lập và hiệu quả hơn.",
+        },
+        {
+          question:
+            "Để tìm kiếm thông tin về một tên miền cụ thể, DNS server sẽ sử dụng loại truy vấn nào?",
+          options: [
+            "Recursive query",
+            "Iterative query",
+            "Both A and B",
+            "None of the above",
+          ],
+          answer: "Both A and B",
+          explanation:
+            "DNS server có thể sử dụng cả hai loại truy vấn: recursive query (truy vấn đệ quy) và iterative query (truy vấn tuần tự). Trong trường hợp truy vấn đệ quy, server sẽ tìm kiếm thông tin cho client và trả về kết quả cuối cùng. Trong trường hợp truy vấn tuần tự, server sẽ trả về thông tin mà nó biết và hướng dẫn client đến các server khác nếu cần.",
+        },
+        {
+          question:
+            "Để phân giải một tên miền thành địa chỉ IP, loại record nào sẽ được sử dụng?",
+          options: [
+            "MX record",
+            "A record",
+            "CNAME record",
+            "PTR record",
+          ],
+          answer: "A record",
+          explanation:
+            "A (Address) record được sử dụng để phân giải tên miền thành địa chỉ IP. Nó liên kết một tên miền cụ thể với địa chỉ IPv4, cho phép các thiết bị trên mạng tìm thấy nhau.",
+        },
+        {
+          question: "Tại sao cần phải có DNS caching trên client?",
+          options: [
+            "Để tăng tốc độ kết nối Internet",
+            "Để giảm số lượng truy vấn đến DNS server",
+            "Để bảo mật thông tin DNS",
+            "Để quản lý nhiều tên miền",
+          ],
+          answer: "Để giảm số lượng truy vấn đến DNS server",
+          explanation:
+            "DNS caching trên client giúp lưu trữ tạm thời các kết quả truy vấn DNS trước đó, do đó giảm số lượng truy vấn gửi đến DNS server. Điều này giúp tiết kiệm băng thông và tăng tốc độ truy vấn cho các tên miền đã được truy cập trước đó.",
+        },
+        {
+          question: "DNS có thể hoạt động trên những loại mạng nào?",
+          options: [
+            "Chỉ trên mạng nội bộ",
+            "Chỉ trên mạng Internet",
+            "Trên cả mạng nội bộ và Internet",
+            "Chỉ trên mạng không dây",
+          ],
+          answer: "Trên cả mạng nội bộ và Internet",
+          explanation:
+            "DNS có thể hoạt động trên cả mạng nội bộ (như mạng LAN) và Internet. Trong mạng nội bộ, DNS có thể giúp phân giải tên miền cho các thiết bị trong mạng, trong khi trên Internet, nó giúp phân giải tên miền cho các trang web và dịch vụ trực tuyến.",
+        },
+        {
+          question: "Một DNS server 'non-authoritative' là gì?",
+          options: [
+            "Server không có quyền quản lý tên miền",
+            "Server không thể trả lời truy vấn",
+            "Server chỉ lưu trữ thông tin tạm thời",
+            "Server chỉ cung cấp thông tin từ cache",
+          ],
+          answer: "Server không có quyền quản lý tên miền",
+          explanation:
+            "DNS server 'non-authoritative' là server không quản lý tên miền mà nó đang cung cấp thông tin. Nó có thể trả lời truy vấn dựa trên thông tin đã lưu trữ trong cache hoặc từ các DNS server khác, nhưng không có quyền quản lý dữ liệu gốc.",
+        },
+        {
+          question: "Điều gì xảy ra khi TTL của một DNS record hết hạn?",
+          options: [
+            "Record sẽ bị xóa khỏi cache",
+            "Record sẽ được tự động cập nhật",
+            "Record sẽ trở thành 'stale'",
+            "Record sẽ không còn khả dụng",
+          ],
+          answer: "Record sẽ bị xóa khỏi cache",
+          explanation:
+            "Khi TTL (Time to Live) của một DNS record hết hạn, record đó sẽ bị xóa khỏi cache của DNS server. Điều này giúp đảm bảo rằng dữ liệu DNS được làm mới và phản ánh thông tin chính xác nhất.",
+        },
+        {
+          question:
+            "Loại DNS record nào cho phép bạn tạo một tên miền phụ (subdomain) cho một tên miền chính?",
+          options: [
+            "A record",
+            "CNAME record",
+            "MX record",
+            "NS record",
+          ],
+          answer: "CNAME record",
+          explanation:
+            "CNAME (Canonical Name) record cho phép bạn tạo một tên miền phụ (subdomain) mà trỏ đến một tên miền khác. Điều này giúp quản lý các tên miền phụ dễ dàng hơn mà không cần phải tạo nhiều A record.",
+        },
+        {
+          question: "DNS sử dụng cổng nào cho các truy vấn UDP?",
+          options: ["Port 80", "Port 53", "Port 443", "Port 25"],
+          answer: "Port 53",
+          explanation:
+            "DNS sử dụng port 53 cho cả UDP và TCP. UDP thường được sử dụng cho các truy vấn nhanh chóng, trong khi TCP được sử dụng cho các tác vụ cần độ tin cậy cao hơn, chẳng hạn như zone transfer.",
+        },
+        {
+          question:
+            "DNS có thể giúp ích gì cho việc bảo mật thông tin trên Internet?",
+          options: [
+            "Giúp tăng tốc độ kết nối",
+            "Cung cấp xác thực cho các truy vấn DNS",
+            "Giúp quản lý băng thông",
+            "Không có tác dụng gì",
+          ],
+          answer: "Cung cấp xác thực cho các truy vấn DNS",
+          explanation:
+            "DNS có thể được bảo mật thông qua DNSSEC, cho phép xác thực tính toàn vẹn của dữ liệu DNS và ngăn chặn các cuộc tấn công giả mạo. Điều này giúp bảo vệ thông tin trên Internet khỏi các mối đe dọa.",
+        },
+        {
+          question:
+            "Tại sao cần phải có các DNS server phân tán trên toàn cầu?",
+          options: [
+            "Để giảm chi phí",
+            "Để tăng tốc độ truy vấn và khả năng chịu lỗi",
+            "Để quản lý tên miền dễ dàng hơn",
+            "Để bảo vệ thông tin khỏi bị đánh cắp",
+          ],
+          answer: "Để tăng tốc độ truy vấn và khả năng chịu lỗi",
+          explanation:
+            "Các DNS server phân tán trên toàn cầu giúp cải thiện tốc độ truy vấn bằng cách giảm khoảng cách giữa client và server. Ngoài ra, nếu một server gặp sự cố, các server khác vẫn có thể phục vụ yêu cầu, tăng cường khả năng chịu lỗi.",
+        },
+        {
+          question:
+            "Để phân giải một địa chỉ IP thành tên miền, loại record nào sẽ được sử dụng?",
+          options: [
+            "A record",
+            "CNAME record",
+            "PTR record",
+            "MX record",
+          ],
+          answer: "PTR record",
+          explanation:
+            "PTR (Pointer) record được sử dụng để phân giải địa chỉ IP thành tên miền. Điều này thường được thực hiện trong các truy vấn ngược (reverse lookup), cho phép xác định tên miền tương ứng với một địa chỉ IP cụ thể.",
+        },
+        {
+          question:
+            "Loại DNS record nào chứa thông tin về máy chủ nhận email cho một tên miền?",
+          options: [
+            "A record",
+            "CNAME record",
+            "MX record",
+            "TXT record",
+          ],
+          answer: "MX record",
+          explanation:
+            "MX (Mail Exchange) record chứa thông tin về máy chủ nhận email cho một tên miền, cho phép các email được gửi đến đúng địa chỉ. Nó xác định máy chủ nào sẽ nhận email cho tên miền đó.",
+        },
+        {
+          question:
+            "Khi một client gửi yêu cầu DNS, nó thường gửi yêu cầu đến đâu đầu tiên?",
+          options: [
+            "Root DNS server",
+            "Local DNS server",
+            "Authoritative DNS server",
+            "TLD DNS server",
+          ],
+          answer: "Local DNS server",
+          explanation:
+            "Khi một client gửi yêu cầu DNS, nó thường gửi yêu cầu đến Local DNS server (DNS server cục bộ) trước tiên. Nếu Local DNS server không có thông tin trong cache, nó sẽ tiếp tục tìm kiếm thông tin từ các DNS server khác.",
+        },
+        {
+          question:
+            "DNS có thể được cấu hình để hoạt động như thế nào trong một mạng nội bộ?",
+          options: [
+            "Chỉ phục vụ cho các tên miền công cộng",
+            "Chỉ phục vụ cho các tên miền nội bộ",
+            "Cả hai: tên miền công cộng và nội bộ",
+            "Không thể cấu hình trong mạng nội bộ",
+          ],
+          answer: "Chỉ phục vụ cho các tên miền nội bộ",
+          explanation:
+            "Trong một mạng nội bộ, DNS thường được cấu hình để phục vụ cho các tên miền nội bộ, giúp các thiết bị trong mạng có thể dễ dàng tìm thấy nhau mà không cần phải truy cập Internet.",
+        },
+        {
+          question:
+            "Tại sao cần phải có TTL (Time To Live) cho các DNS record?",
+          options: [
+            "Để xác định thời gian sống của các record trong cache",
+            "Để tăng tốc độ truy vấn DNS",
+            "Để bảo vệ thông tin DNS",
+            "Để lưu trữ thông tin vĩnh viễn",
+          ],
+          answer: "Để xác định thời gian sống của các record trong cache",
+          explanation:
+            "TTL (Time To Live) là khoảng thời gian mà một DNS record có thể được lưu trữ trong cache trước khi bị xóa. Điều này giúp đảm bảo rằng thông tin được cập nhật kịp thời và không bị lỗi thời.",
+        },
+        {
+          question: "DNS Forwarding là gì?",
+          options: [
+            "Quá trình lưu trữ thông tin DNS",
+            "Quá trình chuyển tiếp truy vấn đến một DNS server khác",
+            "Quá trình quản lý tên miền",
+            "Quá trình phân giải địa chỉ IP",
+          ],
+          answer: "Quá trình chuyển tiếp truy vấn đến một DNS server khác",
+          explanation:
+            "DNS Forwarding là quá trình mà một DNS server chuyển tiếp truy vấn đến một DNS server khác, thường là khi nó không có thông tin trong cache hoặc không quản lý tên miền mà client yêu cầu.",
+        },
+        {
+          question: 'Một DNS server "authoritative" là gì?',
+          options: [
+            "Server không có quyền quản lý tên miền",
+            "Server có quyền quản lý và cung cấp thông tin chính xác cho tên miền",
+            "Server chỉ lưu trữ thông tin tạm thời",
+            "Server không thể trả lời truy vấn",
+          ],
+          answer:
+            "Server có quyền quản lý và cung cấp thông tin chính xác cho tên miền",
+          explanation:
+            'DNS server "authoritative" là server có quyền quản lý tên miền mà nó cung cấp thông tin. Nó có khả năng trả lời các truy vấn với thông tin chính xác từ cơ sở dữ liệu của mình.',
+        },
+        {
+          question:
+            "Loại DNS record nào có thể được sử dụng để lưu trữ thông tin bổ sung về một tên miền, chẳng hạn như thông tin liên hệ hoặc chính sách bảo mật?",
+          options: [
+            "A record",
+            "MX record",
+            "TXT record",
+            "CNAME record",
+          ],
+          answer: "TXT record",
+          explanation:
+            "TXT (Text) record cho phép lưu trữ thông tin bổ sung về một tên miền, chẳng hạn như thông tin liên hệ, chính sách bảo mật, hoặc các thông tin khác mà các ứng dụng có thể sử dụng.",
+        },
+        {
+          question: "DNS có thể giúp cải thiện hiệu suất mạng như thế nào?",
+          options: [
+            "Bằng cách giảm băng thông",
+            "Bằng cách tăng tốc độ truy vấn",
+            "Bằng cách bảo mật thông tin",
+            "Bằng cách lưu trữ tất cả thông tin DNS",
+          ],
+          answer: "Bằng cách tăng tốc độ truy vấn",
+          explanation:
+            "DNS giúp cải thiện hiệu suất mạng bằng cách cung cấp khả năng phân giải tên miền nhanh chóng, cho phép các thiết bị tìm thấy nhau nhanh hơn và giảm thời gian truy cập vào các dịch vụ trực tuyến.",
+        },
+        {
+          question: "Trong trường hợp nào bạn nên sử dụng DNS delegation?",
+          options: [
+            "Khi bạn muốn quản lý tên miền một cách tập trung",
+            "Khi bạn muốn ủy thác quyền quản lý cho một DNS server khác",
+            "Khi bạn không có DNS server",
+            "Khi bạn muốn tăng tốc độ DNS",
+          ],
+          answer:
+            "Khi bạn muốn ủy thác quyền quản lý cho một DNS server khác",
+          explanation:
+            "DNS delegation là quá trình phân quyền cho một DNS server khác để quản lý một phần tên miền. Điều này giúp phân tán tải công việc quản lý DNS và cải thiện hiệu suất.",
+        },
+        {
+          question: 'Khi nào một DNS record có thể được coi là "stale"?',
+          options: [
+            "Khi nó bị xóa khỏi cache",
+            "Khi TTL của nó đã hết hạn",
+            "Khi nó không còn chính xác",
+            "Cả B và C",
+          ],
+          answer: "Cả B và C",
+          explanation:
+            'Một DNS record có thể được coi là "stale" khi TTL của nó đã hết hạn, hoặc khi thông tin trong record không còn chính xác nữa. Điều này có thể xảy ra nếu tên miền đã được thay đổi hoặc cập nhật.',
+        },
+        {
+          question:
+            "Điều gì xảy ra khi một DNS server không thể phân giải một tên miền?",
+          options: [
+            "Nó sẽ trả về một địa chỉ IP mặc định",
+            "Nó sẽ gửi một thông báo lỗi",
+            "Nó sẽ chuyển tiếp truy vấn đến một DNS server khác",
+            "Nó sẽ lưu trữ kết quả trong cache",
+          ],
+          answer:
+            "Cả hai lựa chọn B và C đều có thể đúng trong các ngữ cảnh khác nhau.",
+          explanation:
+            "Nếu DNS server không thể phân giải tên miền và không có khả năng chuyển tiếp, nó có thể trả về thông báo lỗi. Tuy nhiên, trong nhiều trường hợp, DNS server sẽ cố gắng chuyển tiếp truy vấn đến một server khác.",
+        },
+        {
+          question: "Tại sao cần phải có nhiều loại DNS record khác nhau?",
+          options: [
+            "Để tăng cường bảo mật",
+            "Để phục vụ các mục đích khác nhau",
+            "Để giảm chi phí",
+            "Để đơn giản hóa quản lý",
+          ],
+          answer: "Để phục vụ các mục đích khác nhau",
+          explanation:
+            "Các loại DNS record khác nhau phục vụ cho các mục đích khác nhau, chẳng hạn như phân giải tên miền thành địa chỉ IP (A record), cung cấp thông tin về máy chủ email (MX record), và lưu trữ thông tin bổ sung (TXT record).",
+        },
+        {
+          question: "DNS có thể hỗ trợ các giao thức nào?",
+          options: [
+            "Chỉ HTTP",
+            "Chỉ FTP",
+            "HTTP, FTP và nhiều giao thức khác",
+            "Không hỗ trợ giao thức nào",
+          ],
+          answer: "HTTP, FTP và nhiều giao thức khác",
+          explanation:
+            "DNS hỗ trợ nhiều giao thức khác nhau, bao gồm HTTP, FTP, và nhiều giao thức khác, vì nó giúp phân giải tên miền cho các dịch vụ và ứng dụng khác nhau trên Internet.",
+        },
+        {
+          question:
+            "Một DNS server có thể được cấu hình để sử dụng phương pháp nào để giảm thiểu lưu lượng truy vấn?",
+          options: [
+            "Chỉ sử dụng A record",
+            "Sử dụng DNS caching",
+            "Sử dụng DNS delegation",
+            "Không có phương pháp nào",
+          ],
+          answer: "Sử dụng DNS caching",
+          explanation:
+            "DNS caching là phương pháp giúp giảm thiểu lưu lượng truy vấn bằng cách lưu trữ các kết quả truy vấn đã thực hiện trước đó. Điều này cho phép server trả lời nhanh chóng cho các truy vấn tương tự mà không cần phải thực hiện lại các truy vấn đến các DNS server khác.",
+        },
+        {
+          question:
+            "Để bảo mật thông tin DNS, bạn có thể sử dụng công nghệ nào?",
+          options: ["DNSSEC", "SSL", "VPN", "Firewall"],
+          answer: "DNSSEC",
+          explanation:
+            "DNSSEC (DNS Security Extensions) là công nghệ giúp bảo mật thông tin DNS bằng cách xác thực tính toàn vẹn của dữ liệu DNS và ngăn chặn các cuộc tấn công giả mạo.",
+        },
+        {
+          question:
+            "Một DNS server có thể được cấu hình để hoạt động như thế nào trong một tổ chức lớn?",
+          options: [
+            "Chỉ sử dụng một DNS server duy nhất",
+            "Sử dụng nhiều DNS server để phân phối tải",
+            "Không cần DNS server",
+            "Chỉ sử dụng DNS server cục bộ",
+          ],
+          answer: "Sử dụng nhiều DNS server để phân phối tải",
+          explanation:
+            "Trong một tổ chức lớn, việc sử dụng nhiều DNS server giúp phân phối tải, cải thiện hiệu suất và tăng cường khả năng chịu lỗi. Điều này đảm bảo rằng các truy vấn DNS có thể được xử lý nhanh chóng và hiệu quả.",
+        },
+      ];
+
+      const quizContainer = document.getElementById("quiz");
+
+      function loadQuiz() {
+        quizData.forEach((item, index) => {
+          const questionBox = document.createElement("div");
+          questionBox.classList.add("question-box");
+
+          questionBox.innerHTML = `
+          <div class="question">${index + 1}. ${item.question}</div>
+          <ul class="answers">
+            ${item.options
+              .map(
+                (option, i) =>
+                  `<li>
+                    <label>
+                      <input type="radio" name="question${index}" value="${i}">
+                      ${option}
+                    </label>
+                  </li>`
+              )
+              .join("")}
+          </ul>
+          <button class="btn" onclick="showExplanation(${index})">Xem đáp án và lời giải</button>
+          <div id="explanation${index}" class="explanation hidden">
+            Đáp án đúng: ${item.answer}<br>
+            Lời giải: ${item.explanation}
+          </div>
+        `;
+
+          quizContainer.appendChild(questionBox);
+        });
+      }
+
+      function showExplanation(index) {
+        const explanation = document.getElementById(`explanation${index}`);
+        if (explanation.classList.contains("hidden")) {
+          explanation.classList.remove("hidden");
+        } else {
+          explanation.classList.add("hidden");
+        }
+      }
+
+      const resultContainer = document.getElementById("result");
+
+      function checkAnswers() {
+        let score = 0;
+
+        quizData.forEach((item, index) => {
+          const selected = document.querySelector(
+            `input[name="question${index}"]:checked`
+          );
+          if (selected && parseInt(selected.value) === item.correct) {
+            score++;
+          }
+        });
+
+        if (score === quizData.length) {
+          resultContainer.textContent = `Perfect! You scored ${score}/${quizData.length}.`;
+          resultContainer.className = "result";
+        } else {
+          resultContainer.textContent = `You scored ${score}/${quizData.length}. Try again!`;
+          resultContainer.className = "result error";
+        }
+      }
+
+      loadQuiz();
+    </script>
+  </body>
+</html>
